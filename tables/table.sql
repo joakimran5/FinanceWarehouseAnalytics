@@ -41,11 +41,12 @@ CREATE TABLE wallet.rsv_csh (
 	rsv_RM20 INT,
 	rsv_RM50 INT,
 	rsv_RM100 INT,
-	tsc_id INT
+	tsc_id INT NULL
 		FOREIGN KEY (tsc_id)
 		REFERENCES bank.acc1_tsc(tsc_id)
 );
 /***************************************************************/
+
 ----------------------INVESTMENT---------------------------------
 /*Create table for ASB account info*/
 IF OBJECT_ID ('invest.asb_acc_info', 'U') IS NOT NULL
@@ -54,26 +55,39 @@ CREATE TABLE invest.asb_acc_info (
 	asb_id INT PRIMARY KEY IDENTITY(1,1),
 	asb_code VARCHAR(10) UNIQUE,
 	asb_name VARCHAR(50),
+	asb_type VARCHAR(10)
+);
+
+/*Create table for ASB every year rate and balance*/
+IF OBJECT_ID ('invest.asb_year_rt', 'U') IS NOT NULL
+	DROP TABLE invest.asb_year_rt;
+CREATE TABLE invest.asb_year_rt (
+	asb_rt_id INT PRIMARY KEY IDENTITY(1,1),
+	asb_id INT,
 	asb_year INT,
 	asb_rt DECIMAL(4,2),
-	asb_type VARCHAR(10),
-	asb_amt DECIMAL(9,2)
+	asb_amt DECIMAL(8,2),
+	FOREIGN KEY (asb_id)
+		REFERENCES invest.asb_acc_info(asb_id),
+	UNIQUE (asb_id, asb_year)
 );
 
 /*Create table for ASB transactions */
 CREATE TABLE invest.asb_tsc (
 	asb_tsc_id INT PRIMARY KEY IDENTITY(1,1),
 	asb_id INT,
-	tsc_dt DATE,
-	tsc_amt DECIMAL(8,2),
 	amt_bal DECIMAL(8,2), 
 	bank_tsc_id INT NULL,
+	tng_tsc_id INT NULL,
 		FOREIGN KEY (asb_id)
 				REFERENCES invest.asb_acc_info(asb_id),
 		FOREIGN KEY (bank_tsc_id)
+			REFERENCES bank.acc1_tsc(tsc_id),
+		FOREIGN KEY (tng_tsc_id)
 			REFERENCES bank.acc1_tsc(tsc_id)
 );
 /***************************************************************/
+
 -------------------------DEBT-----------------------------------
 /*Create table for loan account info*/
 IF OBJECT_ID ('debt.ln_acc_info', 'U') IS NOT NULL
@@ -91,9 +105,8 @@ CREATE TABLE debt.ln_tsc (
 	ln_tsc_id INT PRIMARY KEY IDENTITY(1,1),
 	tsc_id INT,
 	ln_id INT,
-	tsc_amt DECIMAL(8,2),
 	amt_bal DECIMAL(8,2), 
-	ln_out DECIMAL(8,2),
+	out_amt DECIMAL(8,2),
 		FOREIGN KEY (ln_id)
 				REFERENCES debt.ln_acc_info(ln_id),
 		FOREIGN KEY (tsc_id)
