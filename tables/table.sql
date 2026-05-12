@@ -8,8 +8,13 @@ IF OBJECT_ID ('invest.asb_tsc', 'U') IS NOT NULL
 	DROP TABLE invest.asb_tsc;
 IF OBJECT_ID ('debt.ln_tsc', 'U') IS NOT NULL
 	DROP TABLE debt.ln_tsc;
+/*Transitive FK as smp_acc1_tsc rely on acc1_mth_tsc and acc1_mth_tsc rely on acc1_tsc*/
+IF OBJECT_ID ('bank.smp_acc1_tsc', 'U') IS NOT NULL
+	DROP TABLE bank.smp_acc1_tsc;
+IF OBJECT_ID ('bank.acc1_mth_tsc', 'U') IS NOT NULL
+	DROP TABLE bank.acc1_mth_tsc;
 
-/*Create Table for one Bank Account*/
+/*Create Table for Bank Account transaction*/
 IF OBJECT_ID ('bank.acc1_tsc', 'U') IS NOT NULL
 	DROP TABLE bank.acc1_tsc;
 CREATE TABLE bank.acc1_tsc (
@@ -23,17 +28,27 @@ CREATE TABLE bank.acc1_tsc (
 );
 
 /*Create Table for every Bank Account for summary of monthly transaction*/
-IF OBJECT_ID ('bank.acc1_mth_tsc', 'U') IS NOT NULL
-	DROP TABLE bank.acc1_mth_tsc;
 CREATE TABLE bank.acc1_mth_tsc (
-	tsc_id INT PRIMARY KEY,
+	tsc_mth_id INT PRIMARY KEY,
 	tsc_mth_dt DATE,
 	tsc_end_bal  DECIMAL(8,2),
 	ttl_cdt  DECIMAL(8,2),
 	ttl_dbt  DECIMAL(8,2),
-	tsc_mid_bal  DECIMAL(8,2)
+	tsc_mid_bal  DECIMAL(8,2),
+	tsc_id INT
 	FOREIGN KEY (tsc_id)
 		REFERENCES bank.acc1_tsc(tsc_id)
+);
+
+/*Create Table of simplified version of Bank Account transaction*/
+CREATE TABLE bank.smp_acc1_tsc (
+	tsc_smp_id INT PRIMARY KEY,
+	tsc_smp_dt DATE,
+	tsc_smp_cat NVARCHAR(30),
+	tsc_smp_amt DECIMAL(8,2),
+	tsc_smp_type NVARCHAR(3),
+	FOREIGN KEY (tsc_smp_id)
+		REFERENCES bank.acc1_mth_tsc(tsc_mth_id)
 );
 
 /**************************************************************/
