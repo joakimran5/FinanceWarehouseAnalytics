@@ -29,7 +29,7 @@ CREATE TABLE bank.acc1_tsc (
 
 /*Create Table for every Bank Account for summary of monthly transaction*/
 CREATE TABLE bank.acc1_mth_tsc (
-	tsc_mth_id INT PRIMARY KEY,
+	tsc_mth_id INT PRIMARY KEY IDENTITY(1,1),
 	tsc_mth_dt DATE,
 	tsc_end_bal  DECIMAL(8,2),
 	ttl_cdt  DECIMAL(8,2),
