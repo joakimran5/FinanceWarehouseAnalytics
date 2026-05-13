@@ -30,7 +30,7 @@ CREATE TABLE bank.acc1_tsc (
 /*Create Table for every Bank Account for summary of monthly transaction*/
 CREATE TABLE bank.acc1_mth_tsc (
 	tsc_mth_id INT PRIMARY KEY IDENTITY(1,1),
-	tsc_mth_dt DATE,
+	tsc_mth_dt NVARCHAR(10),
 	tsc_end_bal  DECIMAL(8,2),
 	ttl_cdt  DECIMAL(8,2),
 	ttl_dbt  DECIMAL(8,2),
@@ -43,7 +43,6 @@ CREATE TABLE bank.acc1_mth_tsc (
 /*Create Table of simplified version of Bank Account transaction*/
 CREATE TABLE bank.smp_acc1_tsc (
 	tsc_smp_id INT PRIMARY KEY,
-	tsc_smp_dt DATE,
 	tsc_smp_cat NVARCHAR(30),
 	tsc_smp_amt DECIMAL(8,2),
 	tsc_smp_type NVARCHAR(3),
