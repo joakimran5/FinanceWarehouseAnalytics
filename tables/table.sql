@@ -42,7 +42,7 @@ CREATE TABLE bank.acc1_mth_tsc (
 
 /*Create Table of simplified version of Bank Account transaction*/
 CREATE TABLE bank.smp_acc1_tsc (
-	tsc_smp_id INT PRIMARY KEY,
+	tsc_smp_id INT,
 	tsc_smp_cat NVARCHAR(30),
 	tsc_smp_amt DECIMAL(8,2),
 	tsc_smp_type NVARCHAR(3),
