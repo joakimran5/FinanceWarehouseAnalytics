@@ -9,8 +9,8 @@ IF OBJECT_ID ('invest.asb_tsc', 'U') IS NOT NULL
 IF OBJECT_ID ('debt.ln_tsc', 'U') IS NOT NULL
 	DROP TABLE debt.ln_tsc;
 /*Transitive FK as smp_acc1_tsc rely on acc1_mth_tsc and acc1_mth_tsc rely on acc1_tsc*/
-IF OBJECT_ID ('bank.smp_acc1_tsc', 'U') IS NOT NULL
-	DROP TABLE bank.smp_acc1_tsc;
+IF OBJECT_ID ('bank.acc1_exp', 'U') IS NOT NULL
+	DROP TABLE bank.acc1_exp;
 IF OBJECT_ID ('bank.acc1_mth_tsc', 'U') IS NOT NULL
 	DROP TABLE bank.acc1_mth_tsc;
 
@@ -40,13 +40,16 @@ CREATE TABLE bank.acc1_mth_tsc (
 		REFERENCES bank.acc1_tsc(tsc_id)
 );
 
-/*Create Table of simplified version of Bank Account transaction*/
-CREATE TABLE bank.smp_acc1_tsc (
-	tsc_smp_id INT,
-	tsc_smp_cat NVARCHAR(30),
-	tsc_smp_amt DECIMAL(8,2),
-	tsc_smp_type NVARCHAR(3),
-	FOREIGN KEY (tsc_smp_id)
+/*Create Table of Bank Account expenses*/
+CREATE TABLE bank.acc1_exp (
+	tsc_mth_id INT,
+	acc1_exp_cat NVARCHAR(30),
+	acc1_exp_amt DECIMAL(8,2),
+	acc1_exp_typ NVARCHAR(3),
+	acc1_exp_cls NVARCHAR(50),
+	acc1_exp_rmk NVARCHAR(500),
+	acc1_exp_id  INT PRIMARY KEY IDENTITY(1,1),
+	FOREIGN KEY (tsc_mth_id)
 		REFERENCES bank.acc1_mth_tsc(tsc_mth_id)
 );
 
