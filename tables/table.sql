@@ -8,12 +8,8 @@ IF OBJECT_ID ('invest.asb_tsc', 'U') IS NOT NULL
 	DROP TABLE invest.asb_tsc;
 IF OBJECT_ID ('debt.ln_tsc', 'U') IS NOT NULL
 	DROP TABLE debt.ln_tsc;
-/*Transitive FK as smp_acc1_tsc rely on acc1_mth_tsc and acc1_mth_tsc rely on acc1_tsc*/
-IF OBJECT_ID ('bank.acc1_exp', 'U') IS NOT NULL
-	DROP TABLE bank.acc1_exp;
 IF OBJECT_ID ('bank.acc1_mth_tsc', 'U') IS NOT NULL
 	DROP TABLE bank.acc1_mth_tsc;
-
 /*Create Table for Bank Account transaction*/
 IF OBJECT_ID ('bank.acc1_tsc', 'U') IS NOT NULL
 	DROP TABLE bank.acc1_tsc;
@@ -40,15 +36,17 @@ CREATE TABLE bank.acc1_mth_tsc (
 		REFERENCES bank.acc1_tsc(tsc_id)
 );
 
+IF OBJECT_ID ('bank.acc1_exps', 'U') IS NOT NULL
+	DROP TABLE bank.acc1_exps;
 /*Create Table of Bank Account expenses*/
-CREATE TABLE bank.acc1_exp (
+CREATE TABLE bank.acc1_exps (
 	tsc_mth_id INT,
-	acc1_exp_cat NVARCHAR(30),
-	acc1_exp_amt DECIMAL(8,2),
-	acc1_exp_typ NVARCHAR(3),
-	acc1_exp_cls NVARCHAR(50),
-	acc1_exp_rmk NVARCHAR(500),
-	acc1_exp_id  INT PRIMARY KEY IDENTITY(1,1),
+	acc1_exps_cat NVARCHAR(30),
+	acc1_exps_amt DECIMAL(8,2),
+	acc1_exps_typ NVARCHAR(3),
+	acc1_exps_cls NVARCHAR(50),
+	acc1_exps_rmk NVARCHAR(500),
+	acc1_exps_id  INT PRIMARY KEY IDENTITY(1,1),
 	FOREIGN KEY (tsc_mth_id)
 		REFERENCES bank.acc1_mth_tsc(tsc_mth_id)
 );
@@ -68,6 +66,7 @@ CREATE TABLE wallet.tng_tsc (
 	amt_bal DECIMAL(8,2)
 );
 
+
 /*Create table for Reserve Cash */
 CREATE TABLE wallet.rsv_csh (
 	rsv_id INT PRIMARY KEY IDENTITY(1,1),
@@ -82,6 +81,20 @@ CREATE TABLE wallet.rsv_csh (
 	tsc_id INT NULL
 		FOREIGN KEY (tsc_id)
 		REFERENCES bank.acc1_tsc(tsc_id)
+);
+
+IF OBJECT_ID ('wallet.hnd_csh', 'U') IS NOT NULL
+	DROP TABLE wallet.hnd_csh;
+/*Create table for Cash */
+CREATE TABLE wallet.hnd_csh (
+	csh_id INT PRIMARY KEY IDENTITY(1,1),
+	csh_dt DATE,
+	csh_amt DECIMAL(5,2),
+	csh_dscrp NVARCHAR(30),
+	csh_typ NVARCHAR(3),
+	rsv_id INT
+		FOREIGN KEY (rsv_id)
+		REFERENCES wallet.rsv_csh(rsv_id)
 );
 
 /***************************************************************/
