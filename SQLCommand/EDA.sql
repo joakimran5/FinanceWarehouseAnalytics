@@ -29,6 +29,43 @@ FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
 GROUP BY tsc_cat
 ORDER BY tsc_cat DESC;
 
+-------Get first & last balance from month transcation table-------------
+SELECT
+	(tsc_end_bal + ttl_dbt - ttl_cdt) AS beginning_balance,
+	tsc_end_bal
+FROM [FinanceWarehouseAnalytics].[bank].[acc1_mth_tsc];
+
+-----View transaction balance baseed on month transcation table-------------
+SELECT
+	*,
+	-- Forward running balance (start from beginning)-------------
+	1474.77 -- begin balance from month transcation table
+	+ SUM(
+		CASE
+			WHEN tsc_type = 'CDT' THEN tsc_amt
+			WHEN tsc_type = 'DBT' THEN -tsc_amt
+		END
+	)
+	OVER (
+		ORDER BY tsc_id
+		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+	) AS running_balance,
+
+	-- Reverse running balance (start from ending)------------
+	2031.37 -- last balance from month transcation table
+	+ SUM(
+		CASE 
+			WHEN tsc_type = 'CDT' THEN -tsc_amt
+			WHEN tsc_type = 'DBT' THEN +tsc_amt
+		END
+	)
+	OVER (
+		ORDER BY tsc_id DESC
+		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+	) AS reverse_balance
+
+FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
+ORDER BY tsc_id 
 ------------------------------------------------------------------
 /**********************TRANSPORTATION******************************/
 -----------------------------------------------------
