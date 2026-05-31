@@ -1,132 +1,174 @@
-/**********************BANK****************************************/
-------------------------------------------------------
-----View total amount of credited and debit ----------
-SELECT
-	tsc_type,
-	SUM(tsc_amt) AS total_amt
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-WHERE tsc_type IN ('CDT', 'DBT')
-GROUP BY tsc_type;
+/**************************************************************/
+-------------------------BANK ACCOUNT-------------------------
+/**************************************************************/
+/*Drop all tables that associate with Account as Foreign Key*/
+IF OBJECT_ID ('bank.acc1_exps', 'U') IS NOT NULL
+	DROP TABLE bank.acc1_exps;
+IF OBJECT_ID ('wallet.hnd_csh', 'U') IS NOT NULL
+	DROP TABLE wallet.hnd_csh;
+IF OBJECT_ID ('wallet.rsv_csh', 'U') IS NOT NULL
+	DROP TABLE wallet.rsv_csh;
+/*Drop table that have FK with ASB account info*/
+IF OBJECT_ID ('invest.asb_year_rt', 'U') IS NOT NULL
+	DROP TABLE invest.asb_year_rt;
+IF OBJECT_ID ('invest.asb_tsc', 'U') IS NOT NULL
+	DROP TABLE invest.asb_tsc;
+IF OBJECT_ID ('debt.ln_tsc', 'U') IS NOT NULL
+	DROP TABLE debt.ln_tsc;
+/*have FK at other table*/
+IF OBJECT_ID ('bank.acc1_mth_tsc', 'U') IS NOT NULL
+	DROP TABLE bank.acc1_mth_tsc;
+IF OBJECT_ID ('bank.acc1_tsc', 'U') IS NOT NULL
+	DROP TABLE bank.acc1_tsc;
 
-----View all transaction----------------------------------
-SELECT tsc_dt,tsc_cat, tsc_descrp, tsc_amt
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
+/*Create Table for summary monthly Bannk Account*/
+CREATE TABLE bank.acc1_mth_tsc (
+	tsc_mth_id INT PRIMARY KEY,
+	tsc_mth_dt DATE,
+	tsc_end_bal  DECIMAL(8,2),
+	ttl_cdt  DECIMAL(8,2),
+	ttl_dbt  DECIMAL(8,2),
+	tsc_mid_bal  DECIMAL(8,2),
+);
 
--------View transaction based on details---------------
-SELECT
-	tsc_cat,
-	tsc_descrp,
-	SUM(tsc_amt) AS total_amt
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-GROUP BY tsc_cat, tsc_descrp
-ORDER BY tsc_cat DESC;
+/*Create Table for Bank Account transaction*/
+CREATE TABLE bank.acc1_tsc (
+	tsc_id INT PRIMARY KEY IDENTITY(1,1),
+	tsc_dt DATE,
+	tsc_cat NVARCHAR(30),
+	tsc_descrp NVARCHAR(50),
+	tsc_amt DECIMAL(8,2),
+	tsc_type NVARCHAR(3),
+	amt_bal DECIMAL(8,2),
+	tsc_mth_id INT
+	FOREIGN KEY (tsc_mth_id)
+		REFERENCES bank.acc1_mth_tsc(tsc_mth_id)
+);
 
--------View transaction based on category-------------
-SELECT
-	tsc_cat,
-	SUM(tsc_amt) AS total_amt
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-GROUP BY tsc_cat
-ORDER BY tsc_cat DESC;
 
--------Get first & last balance from month transcation table-------------
-SELECT
-	(tsc_end_bal + ttl_dbt - ttl_cdt) AS beginning_balance,
-	tsc_end_bal
-FROM [FinanceWarehouseAnalytics].[bank].[acc1_mth_tsc];
+/*Create Table of Bank Account expenses*/
+CREATE TABLE bank.acc1_exps (
+	tsc_mth_id INT,
+	acc1_exps_cat NVARCHAR(30),
+	acc1_exps_amt DECIMAL(8,2),
+	acc1_exps_typ NVARCHAR(3),
+	acc1_exps_cls NVARCHAR(50),
+	acc1_exps_rmk NVARCHAR(500),
+	acc1_exps_id  INT PRIMARY KEY IDENTITY(1,1),
+	FOREIGN KEY (tsc_mth_id)
+		REFERENCES bank.acc1_mth_tsc(tsc_mth_id)
+);
 
------View transaction balance baseed on month transcation table-------------
-SELECT
-	*,
-	-- Forward running balance (start from beginning)-------------
-	1474.77 -- begin balance from month transcation table
-	+ SUM(
-		CASE
-			WHEN tsc_type = 'CDT' THEN tsc_amt
-			WHEN tsc_type = 'DBT' THEN -tsc_amt
-		END
-	)
-	OVER (
-		ORDER BY tsc_id
-		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-	) AS running_balance,
+/**************************************************************/
+----------------------WALLET-------------------------------------
+/**************************************************************/
+/*Create table for E-wallet */
+IF OBJECT_ID ('wallet.tng_tsc', 'U') IS NOT NULL
+	DROP TABLE wallet.tng_tsc;
+CREATE TABLE wallet.tng_tsc (
+	tsc_id INT PRIMARY KEY IDENTITY(1,1),
+	tsc_dt DATE,
+	tsc_descrp NVARCHAR(50),
+	tsc_amt DECIMAL(8,2),
+	tsc_type NVARCHAR(3),
+	amt_bal DECIMAL(8,2)
+);
 
-	-- Reverse running balance (start from ending)------------
-	2031.37 -- last balance from month transcation table
-	+ SUM(
-		CASE 
-			WHEN tsc_type = 'CDT' THEN -tsc_amt
-			WHEN tsc_type = 'DBT' THEN +tsc_amt
-		END
-	)
-	OVER (
-		ORDER BY tsc_id DESC
-		ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-	) AS reverse_balance
 
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-ORDER BY tsc_id 
-------------------------------------------------------------------
-/**********************TRANSPORTATION******************************/
------------------------------------------------------
----View sum of Petrol consumption for a month -------
-SELECT
-	SUM(tsc_amt) AS total_petrol_expense
-FROM bank.acc1_tsc
-WHERE tsc_descrp = 'petrol'
-	AND tsc_type = 'DBT'
-	AND MONTH(tsc_dt) = 4
-	AND YEAR(tsc_dt) = 2026;
+/*Create table for Reserve Cash */
+CREATE TABLE wallet.rsv_csh (
+	rsv_id INT PRIMARY KEY IDENTITY(1,1),
+	rsv_dt DATE,
+	rsv_amt INT,
+	rsv_RM1 INT,
+	rsv_RM5 INT,
+	rsv_RM10 INT,
+	rsv_RM20 INT,
+	rsv_RM50 INT,
+	rsv_RM100 INT,
+	tsc_id INT NULL
+		FOREIGN KEY (tsc_id)
+		REFERENCES bank.acc1_tsc(tsc_id)
+);
 
----Amount Spend for transportation for a month-------
-SELECT sum(tsc_amt), tsc_descrp, tsc_type
-FROM bank.acc1_tsc
-WHERE tsc_cat = 'Transportation' 
-	AND MONTH(tsc_dt) = 4
-	AND YEAR(tsc_dt) = 2026
-group by tsc_descrp, tsc_type;
 
----Amount Spend for petrol & sustaining car for a month-------
-SELECT 
-    SUM(CASE 
-            WHEN tsc_cat = 'transportation' 
-                 AND tsc_descrp <> 'petrol'
-				 AND MONTH(tsc_dt) = 4
-				 AND YEAR(tsc_dt) = 2026
-            THEN tsc_amt
-            ELSE 0
-        END) AS 'Total Sustaining',
+/*Create table for Cash */
+CREATE TABLE wallet.hnd_csh (
+	csh_id INT PRIMARY KEY IDENTITY(1,1),
+	csh_dt DATE,
+	csh_amt DECIMAL(5,2),
+	csh_dscrp NVARCHAR(30),
+	csh_typ NVARCHAR(3),
+	rsv_id INT
+		FOREIGN KEY (rsv_id)
+		REFERENCES wallet.rsv_csh(rsv_id)
+);
 
-    SUM(CASE 
-            WHEN tsc_cat = 'transportation' 
-                 AND tsc_descrp = 'petrol'
-				 AND MONTH(tsc_dt) = 4
-				 AND YEAR(tsc_dt) = 2026
-            THEN tsc_amt
-            ELSE 0
-        END) AS 'Petrol Consumption'
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc;
+/***************************************************************/
+----------------------INVESTMENT---------------------------------
+/**************************************************************/
+/*Create table for ASB account info*/
+IF OBJECT_ID ('invest.asb_acc_info', 'U') IS NOT NULL
+	DROP TABLE invest.asb_acc_info;
+CREATE TABLE invest.asb_acc_info (
+	asb_id INT PRIMARY KEY IDENTITY(1,1),
+	asb_code VARCHAR(10) UNIQUE,
+	asb_name VARCHAR(50),
+	asb_type VARCHAR(10)
+);
 
----------------------------------------------------------------
-/**********************INCOME*********************************/
----------------------------------------------------------------
---------Total Credit into account----------------------------
-SELECT sum(tsc_amt) AS 'Total Credited'
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-WHERE MONTH(tsc_dt) = 4 AND YEAR(tsc_dt) = 2026
+/*Create table for ASB every year rate and balance*/
+CREATE TABLE invest.asb_year_rt (
+	asb_rt_id INT PRIMARY KEY IDENTITY(1,1),
+	asb_id INT,
+	asb_year INT,
+	asb_rt DECIMAL(4,2),
+	asb_amt DECIMAL(8,2),
+	FOREIGN KEY (asb_id)
+		REFERENCES invest.asb_acc_info(asb_id),
+	UNIQUE (asb_id, asb_year)
+);
 
--------Total Credit into account with Descrption---------------
-SELECT sum(tsc_amt) AS 'Total Credited', tsc_descrp AS 'Details'
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-WHERE tsc_type = 'CDT'
-		AND MONTH(tsc_dt) = 4
-		AND YEAR(tsc_dt) = 2026
-group by tsc_descrp 
+/*Create table for ASB transactions */
+CREATE TABLE invest.asb_tsc (
+	asb_tsc_id INT PRIMARY KEY IDENTITY(1,1),
+	asb_id INT,
+	amt_bal DECIMAL(8,2), 
+	bank_tsc_id INT NULL,
+	tng_tsc_id INT NULL,
+		FOREIGN KEY (asb_id)
+				REFERENCES invest.asb_acc_info(asb_id),
+		FOREIGN KEY (bank_tsc_id)
+			REFERENCES bank.acc1_tsc(tsc_id),
+		FOREIGN KEY (tng_tsc_id)
+			REFERENCES wallet.tng_tsc(tsc_id)
+);
 
---------Total income into account------------------------------
-SELECT sum(tsc_amt) AS total_income_amt
-FROM [FinanceWarehouseAnalytics].[bank].acc1_tsc
-WHERE tsc_type = 'CDT' AND NOT tsc_descrp='Refund-postpaid'
-		AND MONTH(tsc_dt) = 4
-		AND YEAR(tsc_dt) = 2026
----------------------------------------------------------------
+/***************************************************************/
+-------------------------DEBT-----------------------------------
+/**************************************************************/
+/*Create table for loan account info*/
+IF OBJECT_ID ('debt.ln_acc_info', 'U') IS NOT NULL
+	DROP TABLE debt.ln_acc_info;
+CREATE TABLE debt.ln_acc_info (
+	ln_id INT PRIMARY KEY IDENTITY(1,1),
+	ln_code VARCHAR(10) UNIQUE,
+	ln_type CHAR(3),
+	ln_amt DECIMAL(8,2),
+	ln_dur INT,
+	ln_rt DECIMAL(4,2)
+);
+
+/*Create table for loan transactions*/
+CREATE TABLE debt.ln_tsc (
+	ln_tsc_id INT PRIMARY KEY IDENTITY(1,1),
+	tsc_id INT,
+	ln_id INT,
+	amt_bal DECIMAL(8,2), 
+	out_amt DECIMAL(8,2),
+		FOREIGN KEY (ln_id)
+				REFERENCES debt.ln_acc_info(ln_id),
+		FOREIGN KEY (tsc_id)
+		REFERENCES bank.acc1_tsc(tsc_id)
+);
+/**************************************************************/
