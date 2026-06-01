@@ -8,3 +8,5 @@ CREATE SCHEMA wallet;
 GO
 CREATE SCHEMA invest;
 GO
+CREATE SCHEMA payment;
+GO
