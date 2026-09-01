@@ -10,3 +10,7 @@ CREATE SCHEMA invest;
 GO
 CREATE SCHEMA payment;
 GO
+CREATE SCHEMA silver;
+GO
+CREATE SCHEMA gold;
+GO
